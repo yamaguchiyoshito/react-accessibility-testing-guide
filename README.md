@@ -47,7 +47,7 @@ Accessibility_test/
 
 ## ブラウザで読む（ローカル生成）
 
-Python 3.11以降とPandoc 3.xを使う。Python標準ライブラリだけで動き、追加パッケージは不要である。PNG の書き出しだけは rsvg-convert（librsvg）を使う。この版はPython 3.13・Pandoc 3.7系・librsvg 2.60系で検証した。
+Python 3.11以降とPandoc 3.xを使う。Python標準ライブラリだけで動き、追加パッケージは不要である。PNG の書き出しだけは rsvg-convert（librsvg）を使う。この版はPython 3.11・3.13、Pandoc 3.7系、librsvg 2.60系で検証した。
 
 ```sh
 python3 scripts/draw_figures.py    # 図版を再生成（図を変えたとき）
