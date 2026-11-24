@@ -126,7 +126,7 @@ def wrap_page(title: str, body: str, site: dict, css: str) -> str:
 <header class="topbar"><a href="index.html" class="brand">{html.escape(site["title"])}<span>{html.escape(site.get("eyebrow", ""))}</span></a><div class="topbar-actions"><label class="toc-toggle" for="toc-state"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>目次</label></div></header>
 <label class="toc-backdrop" for="toc-state" aria-hidden="true"></label>
 <aside class="toc-drawer" aria-label="記事の目次"><div class="toc-drawer-head"><strong>記事の目次</strong><label class="toc-close" for="toc-state" title="閉じる"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></label></div><nav aria-label="記事の目次">{''.join(links)}</nav><div class="toc-drawer-foot">{tagline_html}{ref_link}</div></aside>
-<div class="layout"><main id="main" tabindex="-1"><article>{body}</article><footer>{footer_label} — 本文はMarkdown、図はSVG。図の配置と塗り分けは定性的なもので、実測値ではない。社内向け資料。</footer></main></div></body></html>'''
+<div class="layout"><main id="main" tabindex="-1"><article>{body}</article><footer>{footer_label} — 本文はMarkdown、図はSVG。図の配置と塗り分けは定性的なもので、実測値ではない。</footer></main></div></body></html>'''
 
 
 def build(output: Path) -> dict:

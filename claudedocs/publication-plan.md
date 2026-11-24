@@ -162,3 +162,4 @@ push は指示があるまで行わない。
 - 流用 CSS の変更1点：結合した表（`.table-grid`）で折り返さない列を先頭3列から先頭列だけに変えた。rowspan で1列目を落とした行では `nth-child` がずれて3列目まで折り返さなくなり、§3 の表が 360px 幅で横スクロールになっていたため。
 - 360px 幅の確認：§6 の工程別の表と §10 の CI/CD の表、コードブロック5点が横スクロールになる（いずれも `.table-wrap`・`pre` の中で収まり、ページ自体は広がらない）。README の編集ルール 9 に許容として記した。§5 の表は列見出し「操作テスト」を「操作」に、§10 の表は「Pull Request／Merge Request時」を「PR／MR時」に縮めて収めた。ダークモードは図の地が明色のままで、前の記事と同じ扱い。
 - 削除（同日）：著者の判断で §11「AIによるアクセシビリティテスト支援」を本文から削除し、旧 §12「おわりに」を §11 に繰り上げた（D7 を撤回）。章数は 11。図 11-four-layers は「おわりに」の図で、ファイル名の章番号はそのまま合う。
+- 公開（同日）：著者の指示で D1 を変更。GitHub の非公開リポジトリ `yamaguchiyoshito/react-accessibility-testing-guide` を公開に切り替え、前の記事（archive/pro-main）の `.github/workflows/pages.yml` からスライドの手順を除いて流用し、GitHub Pages（https://yamaguchiyoshito.github.io/react-accessibility-testing-guide/ ）で配信する。`site.json` の `url` を設定し、`build.py` のフッターと README から「社内向け」の記述を外した。`dist/offline.html` は Releases（v1.0.0）にも添付する。

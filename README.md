@@ -2,9 +2,9 @@
 
 **アクセシビリティテストは、静的解析・axe-core・Playwright・人と支援技術の4層で標準化し、共通コンポーネントが備える品質特性として開発中に継続的に保証する。後工程の検査項目にはしない。**
 
-Reactを用いたFrontend開発で、アクセシビリティの「何を」「どうやって」「どの工程で」「誰が」確認するかを整理し、WCAG 2.2 AAを基本目標とした合否判定基準、CI/CDへの組み込み方までを1記事にまとめた社内向けの技術標準の資料。
+Reactを用いたFrontend開発で、アクセシビリティの「何を」「どうやって」「どの工程で」「誰が」確認するかを整理し、WCAG 2.2 AAを基本目標とした合否判定基準、CI/CDへの組み込み方までを1記事にまとめた技術標準の資料。
 
-[記事を読む](ARTICLE.md)
+[記事を読む](https://yamaguchiyoshito.github.io/react-accessibility-testing-guide/)（GitHub Pages）／ [Markdownで読む](ARTICLE.md)
 
 ## 論旨の要約
 
@@ -15,7 +15,7 @@ Reactを用いたFrontend開発で、アクセシビリティの「何を」「�
 5. 保証する品質をデザインシステム、個別画面、システムの3層に分け、共通コンポーネントで検証済みの振る舞いを画面ごとに再検証しない。画面数に比例してテスト工数が増える構造を抑える。
 6. 自動テストはコミット時、PR／MR時、ビルド後の3段階で毎回実行し、リリース前に人と支援技術で主要業務を確認する。4層（静的解析・axe-core・Playwright・人と支援技術）は4つの観点に対応する。
 
-本文は `ARTICLE.md` の1記事で、連載形式ではない。図版10点は `assets/` のSVGで、すべて `scripts/draw_figures.py` が生成する。社内向け資料のため、GitHub Pagesなどの外部公開は行わず、オフライン閲覧用の単一HTMLで配布する。
+本文は `ARTICLE.md` の1記事で、連載形式ではない。図版10点は `assets/` のSVGで、すべて `scripts/draw_figures.py` が生成する。GitHub Pages で公開し、オフライン閲覧用の単一HTMLも配布する。
 
 ## ファイル構成
 
@@ -34,6 +34,7 @@ Accessibility_test/
 │   ├── build.py               # ARTICLE.md → _site/（HTML）
 │   ├── build_single.py        # _site/index.html → _site/offline.html と dist/offline.html（図を埋め込んだ単一HTML）
 │   └── check_html.py          # _site/ のリンク・図版数・alt・スクリプト不在を検査
+├── .github/workflows/pages.yml # main への push で _site/ をビルドし GitHub Pages へ配信
 ├── .claude/launch.json        # ローカル確認用のプレビューサーバー定義（_site/ を 8765 番で配信。git管理外）
 └── claudedocs/                # 公開計画などの作業記録（サイトには載せない）
 ```
@@ -59,13 +60,19 @@ python3 scripts/check_html.py
 
 `_site/index.html` をブラウザで開く。目次ドロワー（記事の章見出し）、相対リンクの図をローカルで表示する。`check_html.py` は `offline.html` へのリンクも検査するので、`build_single.py` の後に実行する。
 
+## 公開サイト
+
+https://yamaguchiyoshito.github.io/react-accessibility-testing-guide/
+
+`main` へ push すると `.github/workflows/pages.yml` が `scripts/build.py` と `scripts/build_single.py` を実行し、`_site/` を GitHub Pages に配信する。Pandoc は固定版（3.7.0.2）をワークフロー内で取得する。
+
 ## 配布する
 
-`dist/offline.html` は記事をファイル1つにまとめたもので、図を data URI として埋め込み、インターネット接続なしでも開ける。社内への配布はこのファイル1つを共有すればよい。外部スクリプト・外部フォント・外部通信は使っていない。ビルド環境がなくても、GitHub のファイル表示（`dist/offline.html`）右上の「Download raw file」か、次の URL からそのまま取得できる。
+`dist/offline.html` は記事をファイル1つにまとめたもので、図を data URI として埋め込み、インターネット接続なしでも開ける。配布はこのファイル1つを共有すればよい。外部スクリプト・外部フォント・外部通信は使っていない。ビルド環境がなくても、GitHub のファイル表示（`dist/offline.html`）右上の「Download raw file」か、次の URL からそのまま取得できる。
 
 https://github.com/yamaguchiyoshito/react-accessibility-testing-guide/raw/main/dist/offline.html
 
-個別の図を別の資料に貼るときは `assets/` の PNG（SVG と同名、幅2000px）を使う。本文や図を変えたら `scripts/build_single.py` を実行して `dist/offline.html` も更新し、一緒にコミットする。
+版ごとの控えは GitHub の Releases にも同じファイルを添付する。個別の図を別の資料に貼るときは `assets/` の PNG（SVG と同名、幅2000px）を使う。本文や図を変えたら `scripts/build_single.py` を実行して `dist/offline.html` も更新し、一緒にコミットする。
 
 CIで検証する場合は、上記の6コマンドを順に実行し、いずれかが失敗したら配布しない。
 
