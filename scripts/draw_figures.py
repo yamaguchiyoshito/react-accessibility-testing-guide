@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""記事「AI駆動開発における生産性向上と、その裏側で増加するコストについて」の図版を決定論的に生成する。
+"""記事「React／Frontendにおけるアクセシビリティテストの整理」の図版を決定論的に生成する。
 
 体裁：幅1000px、最小フォント14px、注記16px、Python標準ライブラリのみ。
 配色は役割で固定する（claudedocs/publication-plan.md §4.1）。
-  NEUTRAL   従来の作業、人間の作業、区別を付けない基本要素
-  PRIMARY   SUD（開発対象のシステム）とその成果物、開発フロー
-  AI        ADS（SKILL・rules・ツール連携などAIによる開発を支える仕組み）とAIの生成
-  POSITIVE  高速化・効果・再利用
-  ATTENTION コスト・負債・制約・未検証（1図に1系統）
+  NEUTRAL   区別を付けない基本要素、画面・コンポーネントの箱
+  PRIMARY   自動テスト（Lint・axe-core・Testing Library・Playwright）とその検出範囲
+  HUMAN     人と支援技術（スクリーンリーダー・目視・利用者評価）
+  POSITIVE  自動化できる・検証済みの資産として再利用できる
+  ATTENTION ツールでは保証できない・手動が要る・限界（1図に1系統）
   INK       結論・題名の強調（色ではなく太字）
 1図で使う色相は最大3（NEUTRALは数えない）、地の塗りは最大4種。文字と地色のコントラスト比は4.5以上。
 数値を使う図は作らず、定性的な塗り分けと配置だけで示す。要素は2〜5個、矢印は1方向に限る。
@@ -24,12 +24,12 @@ BG = '#fcfdfd'; INK = '#18324b'; T1 = '#223e53'; T2 = '#36556d'; MUTED = '#55646
 LINE = '#607a91'; STROKE = '#8ea6b2'; NEUTRAL = '#eef3f1'; WATER = '#d6e6f2'
 # --- 役割色（地 / 線 / 文字） ---
 PRIMARY = '#e1edf8'; PRI_TEXT = '#2b5f9e'
-AI = '#e9e4f5'; AI_LINE = '#8a6cc1'; AI_TEXT = '#6a4ea6'
+HUMAN = '#e9e4f5'; HUM_LINE = '#8a6cc1'; HUM_TEXT = '#6a4ea6'
 POSITIVE = '#e0f0e9'; POS_LINE = '#5aa06f'; POS_TEXT = '#2f6b45'
 ATTENTION = '#f7e9d4'; ATT_LINE = '#c0604a'; ATT_TEXT = '#9c3f2a'
 
 PALETTE = {BG, INK, T1, T2, MUTED, LINE, STROKE, NEUTRAL, WATER,
-           PRIMARY, PRI_TEXT, AI, AI_LINE, AI_TEXT, POSITIVE, POS_LINE, POS_TEXT, ATTENTION, ATT_LINE, ATT_TEXT}
+           PRIMARY, PRI_TEXT, HUMAN, HUM_LINE, HUM_TEXT, POSITIVE, POS_LINE, POS_TEXT, ATTENTION, ATT_LINE, ATT_TEXT}
 FONT = 'font-family="sans-serif"'
 MIN_FONT = 14
 NOTE_FONT = 16
@@ -149,11 +149,8 @@ def svg(w, h, caption, body, desc=''):
 
 
 # =====================================================================
-# 共通部品：工程の鎖（01・03・08 で同じ形を使う）と SUD・ADS の2箱（06 で使う）
+# 共通部品：テストレベルの鎖（02・06 で使う）と、縦積みの層（01・11 で使う）
 # =====================================================================
-PHASES = ['前工程：準備', '実装：生成', '後工程：理解・検証']
-
-
 def chain(x0, y, labels, total_w=880, gap=12, h=38, size=15, fills=None, colors=None, strokes=None):
     """工程のピルを横一列に並べ、背後に左から右への1本の矢印を引く。戻り値は (svg, [(x, w), ...])。
     fills / colors / strokes は {添字: 色} で個々のピルの地・文字・枠を上書きする（既定は NEUTRAL / T1 / STROKE）。"""
@@ -169,480 +166,276 @@ def chain(x0, y, labels, total_w=880, gap=12, h=38, size=15, fills=None, colors=
     return ''.join(out), cols
 
 
-def sud_ads(y, h=100, x1=190, x2=650):
-    """SUD（PRIMARY、左）と ADS（AI、右）の2箱。幅 280、間の 180px に矢印とラベルを置く。
-    左に行ラベルを置く図は x1=190、置かない図は x1=130 にして図全体を中央に揃える。"""
-    return (box(x1, y, 280, h, PRIMARY, 'SUD', '開発対象のシステム', 22, 15, LINE, 1, PRI_TEXT)
-            + box(x2, y, 280, h, AI, 'ADS', 'SKILL・rules・手順＋TAS', 22, 15, AI_LINE, 1, AI_TEXT))
+LEVELS = ['FE単体', 'FE内部結合', 'FE・BE結合', 'ST（システムテスト）']
+
+
+def levels(y, fills=None, colors=None, strokes=None):
+    """4段階のテストレベルを横一列のピルで描く。戻り値は chain() と同じ (svg, [(x, w), ...])。"""
+    return chain(60, y, LEVELS, total_w=880, fills=fills, colors=colors, strokes=strokes)
+
+
+def stack(y0, rows, lx=60, lw=390, rx=470, rw=330, h=56, gap=8):
+    """上から順に層を積む。rows の各要素は (fill, stroke, head_fill, head, sub, right)。
+    左の箱に head（太字）と sub、右の箱（地は背景色）に right を置く。戻り値は (svg, [各層の y, ...])。"""
+    out = []
+    ys = []
+    for i, (fill, stroke, hf, head, sub, right) in enumerate(rows):
+        y = y0 + i * (h + gap)
+        ys.append(y)
+        out.append(box(lx, y, lw, h, fill, head, sub, 18, 14, stroke, 1, hf))
+        out.append(box(rx, y, rw, h, BG, right, None, 15, 14, STROKE, 1, T1))
+    return ''.join(out), ys
+
+
+def up_axis(x, y_top, y_bottom, top_label, bottom_label):
+    """右端の縦矢印（下から上）と、その上下のラベル。"""
+    return (arrow(x, y_bottom, x, y_top)
+            + text(x, y_top - 12, top_label, 14, 700, HUM_TEXT)
+            + text(x, y_bottom + 20, bottom_label, 14, 700, PRI_TEXT))
 
 
 # =====================================================================
-# §1 効果とコストが発生する工程
+# §1 4つの観点と主な手段
 # =====================================================================
-def fig_01_effect_and_cost_timeline():
-    body = [title('効果とコストは、同じ案件の中で異なる工程・時期に発生する')]
-    ch, cols = chain(150, 96, PHASES, total_w=800)
+def fig_01_four_viewpoints():
+    body = [title('4つの観点は積み上がり、上の観点ほど人の判断が要る')]
+    rows = [
+        (HUMAN, HUM_LINE, HUM_TEXT, '業務の遂行可能性', '支援技術を使った業務フローの完遂', 'シナリオテスト・利用者評価'),
+        (NEUTRAL, STROKE, T1, '操作可能性', 'キーボード・フォーカス・入力操作', 'ブラウザテスト・手動操作'),
+        (NEUTRAL, STROKE, T1, '情報の認識可能性', 'コントラスト・拡大表示・読み上げ', '自動テスト・目視確認'),
+        (PRIMARY, LINE, PRI_TEXT, '実装の妥当性', 'HTML・ARIA・アクセシブルネーム', '静的解析・自動テスト'),
+    ]
+    s, ys = stack(92, rows)
+    body.append(s)
+    body.append(text(255, 84, '観点', 14, 700, MUTED))
+    body.append(text(635, 84, '主な手段', 14, 700, MUTED))
+    body.append(up_axis(880, 112, 332, '人の判断', '機械で確認'))
+    body.append(note(384, '実装が妥当でなければ情報は伝わらず、情報が伝わらなければ操作も業務も成立しない'))
+    return svg(1000, 412, '4つの観点と主な手段', body,
+               desc='上から「業務の遂行可能性（支援技術を使った業務フローの完遂）：シナリオテスト・利用者評価」「操作可能性（キーボード・フォーカス・入力操作）：ブラウザテスト・手動操作」「情報の認識可能性（コントラスト・拡大表示・読み上げ）：自動テスト・目視確認」「実装の妥当性（HTML・ARIA・アクセシブルネーム）：静的解析・自動テスト」の4層を積み、右端の下から上への矢印に「機械で確認」から「人の判断」へと記した図')
+
+
+# =====================================================================
+# §2 検証の単位とテストレベル
+# =====================================================================
+def fig_02_units_and_levels():
+    body = [title('確認の単位ごとに主たる工程を決め、すべてをSTに回さない')]
+    ch, cols = levels(96)
     body.append(ch)
     pw = cols[0][1]
-    cx = [x + w / 2 for x, w in cols]
-    body.append(text(60, 187, '効果', 15, 700, POS_TEXT, 'start'))
-    body.append(box(cols[1][0], 150, pw, 64, POSITIVE, '作業の高速化', '個々の作業時間が短くなる', 17, 14, POS_LINE, 1, POS_TEXT))
-    body.append(text(60, 277, 'コスト', 15, 700, ATT_TEXT, 'start'))
-    body.append(card(cols[0][0], 230, pw, 84, ATTENTION, '準備コスト', ['SKILL・rules・手順の整備', '試行錯誤と評価'], hs=17, rs=14, stroke=ATT_LINE, head_fill=ATT_TEXT, top=28, lh=20))
-    body.append(card(cols[2][0], 230, pw, 84, ATTENTION, '理解・検証のコスト', ['成果物間の整合性確認', '設計判断の背景確認、手戻り'], hs=17, rs=14, stroke=ATT_LINE, head_fill=ATT_TEXT, top=28, lh=20))
-    body.append(text(cx[1], 277, '（この期間はコストが見えにくい）', 14, 400, MUTED))
-    body.append(note(350, '効果が見える工程だけを評価すると、案件全体の生産性向上を過大評価する'))
-    return svg(1000, 380, '効果とコストが発生する工程', body,
-               desc='前工程：準備、実装：生成、後工程：理解・検証の3工程を左から右へ1本の矢印でつなぎ、効果のレーンには実装の列にだけ「作業の高速化（個々の作業時間が短くなる）」を置く。コストのレーンには前工程の列に「準備コスト（SKILL・rules・手順の整備、試行錯誤と評価）」、後工程の列に「理解・検証のコスト（成果物間の整合性確認、設計判断の背景確認、手戻り）」を置き、実装の列は「この期間はコストが見えにくい」と空けた図')
+    body.append(box(cols[0][0], 170, pw, 70, PRIMARY, 'コンポーネント単位', 'Role・名称・操作・配色', 17, 14, LINE, 1, PRI_TEXT))
+    body.append(box(cols[1][0], 170, pw, 70, PRIMARY, '画面単位', '構造・フォーカス・通知', 17, 14, LINE, 1, PRI_TEXT))
+    body.append(lines(cols[2][0] + pw / 2, 202, ['実APIに依存する', '操作だけ'], 14, 400, MUTED, lh=20))
+    body.append(box(cols[3][0], 170, pw, 70, HUMAN, '業務シナリオ単位', '支援技術で業務を完遂', 17, 14, HUM_LINE, 1, HUM_TEXT))
+    body.append(bracket(cols[0][0], cols[1][0] + pw, 262, 'PG・UT工程（Backendの完成を待たない）', POS_TEXT, 15, 700, up=False))
+    body.append(note(344, 'Backendが要るのは、実APIに依存する操作と、業務シナリオの完遂だけ'))
+    return svg(1000, 372, '検証の単位とテストレベル', body,
+               desc='FE単体、FE内部結合、FE・BE結合、ST（システムテスト）の4段階を左から右へ1本の矢印でつなぎ、FE単体の列に「コンポーネント単位（Role・名称・操作・配色）」、FE内部結合の列に「画面単位（構造・フォーカス・通知）」、FE・BE結合の列に「実APIに依存する操作だけ」、STの列に「業務シナリオ単位（支援技術で業務を完遂）」を置き、左2列をブラケットで括って「PG・UT工程（Backendの完成を待たない）」とした図')
 
 
 # =====================================================================
-# §3 生産性評価の対象期間
+# §4 手段と自動化の度合い
 # =====================================================================
-def fig_03_evaluation_window():
-    body = [title('評価対象は、高速化の効果が大きく現れる期間だけに限られている')]
-    ch, cols = chain(60, 100, ['1〜3月', '4〜7月', '結合テスト以降'])
-    pw = cols[0][1]
-    cx = [x + w / 2 for x, w in cols]
-    body.append(rect(cols[1][0] - 12, 86, pw + 24, 196, BG, POS_LINE, 2, dashed=True))
+def fig_04_means_gradient():
+    body = [title('左の手段ほど機械で確認でき、右に進むほど人の判断が要る')]
+    xs = [60, 290, 520, 750]
+    w, y, h = 210, 96, 150
+    body.append(card(xs[0], y, w, h, PRIMARY, '◎ 自動化に適する', ['静的コード解析', 'DOM解析', 'コンポーネントテスト', 'ブラウザ操作テスト'], hs=17, rs=14, stroke=LINE, head_fill=PRI_TEXT, top=28, lh=22))
+    body.append(card(xs[1], y, w, h, NEUTRAL, '○ 部分的に自動化', ['視覚的検証', '拡大表示・配色・リフロー'], hs=17, rs=14, top=28, lh=22))
+    body.append(card(xs[2], y, w, h, HUMAN, '△ 原則手動', ['支援技術による検証', 'スクリーンリーダー', '音声操作'], hs=17, rs=14, stroke=HUM_LINE, head_fill=HUM_TEXT, top=28, lh=22))
+    body.append(card(xs[3], y, w, h, HUMAN, '― 人による評価', ['ユーザビリティ評価', '理解・操作・業務遂行'], hs=17, rs=14, stroke=HUM_LINE, head_fill=HUM_TEXT, top=28, lh=22))
+    body.append(text(500, 282, '確認の対象が、実際の利用に近づく', 14, 700, T2))
+    body.append(arrow(60, 296, 960, 296))
+    for x, s in zip(xs, ['ソース・DOM・ブラウザ', '見た目', '支援技術', '利用者']):
+        body.append(text(x + w / 2, 322, s, 14, 400, T1))
+    body.append(note(364, 'ツールだけでは適合を判断できず、人による評価が必要（W3C）'))
+    return svg(1000, 392, '手段と自動化の度合い', body,
+               desc='4枚のカードを左から「◎ 自動化に適する（静的コード解析、DOM解析、コンポーネントテスト、ブラウザ操作テスト）」「○ 部分的に自動化（視覚的検証：拡大表示・配色・リフロー）」「△ 原則手動（支援技術による検証：スクリーンリーダー、音声操作）」「― 人による評価（ユーザビリティ評価：理解・操作・業務遂行）」と並べ、下の左から右への矢印に「確認の対象が、実際の利用に近づく」と記し、対象を「ソース・DOM・ブラウザ」「見た目」「支援技術」「利用者」と添えた図')
+
+
+# =====================================================================
+# §5 axe-core と Playwright の責務
+# =====================================================================
+def fig_05_axe_vs_playwright():
+    body = [title('axe-coreは一瞬の状態を検査し、Playwrightは操作と遷移を検証する')]
+    body.append(rect(60, 90, 410, 230, NEUTRAL, STROKE, 1))
+    body.append(text(265, 124, 'axe-core', 20, 700, PRI_TEXT))
+    body.append(text(265, 148, 'ルール違反の検出', 15, 700, T1))
+    body.append(box(90, 170, 350, 56, PRIMARY, 'ある瞬間に描画されたDOM', 'ラベル・ARIA・コントラストの違反を列挙', 15, 14, LINE, 1, PRI_TEXT))
+    body.append(text(265, 268, '違反は見るが、操作の成立は見ない', 14, 700, ATT_TEXT))
+    body.append(rect(530, 90, 410, 230, NEUTRAL, STROKE, 1))
+    body.append(text(735, 124, 'Playwright', 20, 700, PRI_TEXT))
+    body.append(text(735, 148, '操作と状態遷移の成立', 15, 700, T1))
+    px = [548, 683, 818]
+    for x, s in zip(px, ['開く前', '開いた直後', 'Tabの後']):
+        body.append(pill(x, 176, 104, 40, s, PRIMARY, 14, 700, PRI_TEXT, LINE))
+    body.append(arrow(652, 196, 683, 196))
+    body.append(arrow(787, 196, 818, 196))
+    body.append(text(667, 170, '操作', 14, 400, T2))
+    body.append(text(802, 170, '操作', 14, 400, T2))
+    body.append(text(735, 240, '各状態でフォーカスや表示を検証', 14, 400, T1))
+    body.append(text(735, 268, '遷移は見るが、違反の網羅はしない', 14, 700, ATT_TEXT))
+    body.append(bracket(60, 940, 336, '両方が要る。片方で他方を代替できない', T1, 15, 700, up=False))
+    body.append(note(404, 'axe-coreの検査を操作テストの途中に組み込むと、状態ごとの違反も検出できる'))
+    return svg(1000, 432, 'axe-coreとPlaywrightの責務', body,
+               desc='左の枠「axe-core：ルール違反の検出」には「ある瞬間に描画されたDOM（ラベル・ARIA・コントラストの違反を列挙）」と「違反は見るが、操作の成立は見ない」、右の枠「Playwright：操作と状態遷移の成立」には「開く前」「開いた直後」「Tabの後」の3状態を操作の矢印でつなぎ「各状態でフォーカスや表示を検証」「遷移は見るが、違反の網羅はしない」を置き、2枠をブラケットで束ねて「両方が要る。片方で他方を代替できない」とした図')
+
+
+# =====================================================================
+# §6 工程ごとの主な確認対象
+# =====================================================================
+def fig_06_levels_and_targets():
+    body = [title('アクセシビリティの確認対象の大半は、PG・UT工程に主戦場がある')]
+    ch, cols = levels(96)
     body.append(ch)
-    body.append(card(cols[0][0], 160, pw, 96, NEUTRAL, 'AI活用の準備', ['環境整備、試行錯誤', 'SKILL・rulesの整備'], hs=17, rs=14, top=30, lh=22))
-    body.append(card(cols[1][0], 160, pw, 96, POSITIVE, 'AIによる作業の高速化', ['実装、テストコード作成', '（結合テスト前まで）'], hs=17, rs=14, stroke=POS_LINE, head_fill=POS_TEXT, top=30, lh=22))
-    body.append(card(cols[2][0], 160, pw, 96, NEUTRAL, '整合性確認と手戻り', ['不具合調査、修正', '成果物間の整合性確認'], hs=17, rs=14, top=30, lh=22))
-    body.append(text(cx[0], 304, '対象外', 15, 700, ATT_TEXT))
-    body.append(text(cx[1], 304, '生産性評価の対象', 15, 700, POS_TEXT))
-    body.append(text(cx[2], 304, '対象外', 15, 700, ATT_TEXT))
-    body.append(note(346, '前工程の準備コストと、後工程の検証・手戻りコストの両方が集計の外にある'))
-    return svg(1000, 376, '生産性評価の対象期間と対象外の工程', body,
-               desc='1〜3月、4〜7月、結合テスト以降の3期間を左から右へ1本の矢印でつなぎ、それぞれの下に「AI活用の準備（環境整備、試行錯誤、SKILL・rulesの整備）」「AIによる作業の高速化（実装、テストコード作成。結合テスト前まで）」「整合性確認と手戻り（不具合調査、修正、成果物間の整合性確認）」の箱を置く。4〜7月の列だけを破線の枠で囲んで「生産性評価の対象」とし、両端の列を「対象外」とした図')
+    pw = cols[0][1]
+    y, h = 160, 150
+    body.append(card(cols[0][0], y, pw, h, PRIMARY, 'コンポーネント', ['HTML・ARIA属性', '名称・役割', '操作', 'コントラスト'], hs=17, rs=14, stroke=LINE, head_fill=PRI_TEXT, top=28, lh=20))
+    body.append(card(cols[1][0], y, pw, h, PRIMARY, '画面', ['画面全体の構造', 'フォーカス順序', '画面遷移後のフォーカス', '拡大・リフロー', 'APIエラー時の通知'], hs=17, rs=14, stroke=LINE, head_fill=PRI_TEXT, top=28, lh=20))
+    body.append(card(cols[2][0], y, pw, h, NEUTRAL, '実APIとの結合', ['認証画面の操作'], hs=17, rs=14, top=28, lh=20))
+    body.append(card(cols[3][0], y, pw, h, HUMAN, '業務シナリオ', ['スクリーンリーダー操作', '業務シナリオの完遂'], hs=17, rs=14, stroke=HUM_LINE, head_fill=HUM_TEXT, top=28, lh=20))
+    body.append(bracket(cols[0][0], cols[1][0] + pw, 332, '主戦場：PG・UT工程', POS_TEXT, 15, 700, up=False))
+    body.append(note(410, 'Backendの完成を待たずに検証できる不具合が大半を占める'))
+    return svg(1000, 438, '工程ごとの主な確認対象', body,
+               desc='FE単体、FE内部結合、FE・BE結合、ST（システムテスト）の4段階の下に、それぞれ「コンポーネント（HTML・ARIA属性、名称・役割、操作、コントラスト）」「画面（画面全体の構造、フォーカス順序、画面遷移後のフォーカス、拡大・リフロー、APIエラー時の通知）」「実APIとの結合（認証画面の操作）」「業務シナリオ（スクリーンリーダー操作、業務シナリオの完遂）」のカードを置き、左2列をブラケットで括って「主戦場：PG・UT工程」とした図')
 
 
 # =====================================================================
-# §4.1 Issue と MR による開発レーンのヘルスチェック
+# §7 3層で保証する品質
 # =====================================================================
-def fig_04_issue_mr_health_check():
-    body = [title('開発レーンの詰まりは、Issueの件数とMRの滞留に現れる')]
-    body.append(bracket(80, 740, 108, '制約（TOC）が発生していないかのヘルスチェック', T2, 14, 700, up=True))
-    body.append(card(80, 120, 240, 80, NEUTRAL, 'Issueの件数', ['積み上がっていないか'], hs=16, rs=14, top=30, lh=20))
-    body.append(card(500, 120, 240, 80, NEUTRAL, 'MRの滞留', ['レビュー待ちが溜まっていないか'], hs=16, rs=14, top=30, lh=20))
-    body.append(rect(60, 230, 880, 90, PRIMARY, LINE, 1))
-    body.append(text(80, 256, '通常の開発レーン', 15, 700, PRI_TEXT, 'start'))
-    body.append(arrow(170, 288, 905, 288))
-    for x, s_ in ((80, 'Issue'), (290, '実装'), (500, 'MR（レビュー）'), (710, 'マージ')):
-        body.append(pill(x, 270, 180, 36, s_, BG, 14, 700, T1, LINE))
-    body.append(path_arrow('M200 200 V262', (200, 266, 0, 1), LINE, dashed=True, width=2))
-    body.append(path_arrow('M620 200 V262', (620, 266, 0, 1), LINE, dashed=True, width=2))
-    body.append(note(358, 'どこかが詰まれば件数と滞留に現れる。これは開発レーンの健全性を見る指標であり、成果物全体の品質保証の作業量は示さない'))
-    return svg(1000, 400, 'IssueとMRによる開発レーンのヘルスチェック', body,
-               desc='「通常の開発レーン」にIssue、実装、MR（レビュー）、マージを左から右へ並べ、Issueの上に「Issueの件数（積み上がっていないか）」、MRの上に「MRの滞留（レビュー待ちが溜まっていないか）」の箱を置いて破線で結び、2つの箱を「制約（TOC）が発生していないかのヘルスチェック」のブラケットで束ねた図')
-
-
-# =====================================================================
-# §4.2 計上されない統合・品質保証の繰り越し
-# =====================================================================
-def fig_04_uncounted_carry_over():
-    body = [title('個々のタスクは順調でも、統合と品質保証の作業は計上されずに繰り越される')]
-    cols = [(190, 'スプリント1'), (390, 'スプリント2'), (590, 'スプリント3')]
-    for x, name in cols:
-        body.append(pill(x, 96, 170, 32, name, BG, 14, 700, T1, STROKE))
-        body.append(box(x, 145, 170, 60, PRIMARY, 'タスク', '順調に進む', 16, 14, LINE, 1, PRI_TEXT))
-    body.append(pill(790, 96, 150, 32, 'リリーススプリント', BG, 14, 700, T1, STROKE))
-    body.append(text(60, 180, '計上済み', 14, 700, T1, 'start'))
-    body.append(text(60, 265, '未計上', 14, 700, ATT_TEXT, 'start'))
-    body.append(rect(190, 230, 570, 60, BG, ATT_LINE, 2, dashed=True))
-    body.append(lines(475, 256, [('統合して品質を保証する作業', 700, ATT_TEXT), ('タスクにもチームの必要工数にも入っていない', 400, T2)], 14, lh=18))
-    body.append(arrow(760, 260, 790, 260, dashed=True, color=ATT_LINE, width=2))
-    body.append(rect(790, 145, 150, 145, ATTENTION, ATT_LINE, 1))
-    body.append(lines(865, 200, [('繰り越された', 700, ATT_TEXT), ('統合・品質保証の', 700, ATT_TEXT), ('作業が集中する', 700, ATT_TEXT)], 14, lh=20))
-    body.append(text(475, 330, '順調なタスクの合計が必要工数に見えるが、将来の負荷はその外にある', 15, 700, T1))
-    body.append(note(372, '繰り越しは開発が進むほど増え、リリーススプリントで想定を上回る人的コストとして現れる'))
-    return svg(1000, 400, '計上されない統合・品質保証の繰り越し', body,
-               desc='スプリント1〜3の各列で「タスク（順調に進む）」の箱を「計上済み」の行に置き、その下の「未計上」の行に「統合して品質を保証する作業（タスクにもチームの必要工数にも入っていない）」の破線枠を3列にまたがって置く。破線枠から右のリリーススプリントの列へ矢印が向かい、「繰り越された統合・品質保証の作業が集中する」とした図')
+def fig_07_responsibility_layers():
+    body = [title('共通コンポーネントで保証した品質は、画面ごとに再検証しない')]
+    h = 86
+    # システム（上）
+    y = 96
+    body.append(rect(60, y, 880, h, HUMAN, HUM_LINE, 1))
+    body.append(text(80, y + 50, 'システム', 17, 700, HUM_TEXT, 'start'))
+    body.append(pill(260, y + 12, 160, 30, '業務フロー', BG, 14, 700, T1))
+    body.append(text(600, y + 70, '保証：支援技術を使用して業務を完遂できること', 14, 400, T1))
+    # 個別画面（中）
+    y = 196
+    body.append(rect(60, y, 880, h, NEUTRAL, STROKE, 1))
+    body.append(text(80, y + 50, '個別画面', 17, 700, T1, 'start'))
+    for i, s in enumerate(['顧客検索', '顧客登録', '契約一覧', '契約詳細']):
+        body.append(pill(260 + i * 150, y + 12, 140, 30, s, BG, 14, 700, T1))
+    body.append(text(600, y + 70, '保証：文脈に応じたラベル・配置・画面遷移・エラー通知', 14, 400, T1))
+    # デザインシステム（下）
+    y = 296
+    body.append(rect(60, y, 880, h, PRIMARY, LINE, 1))
+    body.append(lines(80, y + 42, [('デザインシステム', 700, PRI_TEXT), ('検証済みを再利用', 700, POS_TEXT)], 15, anchor='start', lh=22))
+    for i, s in enumerate(['Button', 'Input', 'Dialog', 'Select', 'Checkbox', 'Tabs']):
+        body.append(pill(260 + i * 100, y + 12, 90, 30, s, BG, 14, 700, T1))
+    body.append(text(600, y + 70, '保証：Role・ARIA・キー操作・フォーカス管理・基本配色', 14, 400, T1))
+    body.append(note(422, '画面数が増えても、共通コンポーネントの回帰テストは増えない。組み合わせの問題だけを画面で確認する'))
+    return svg(1000, 452, '3層で保証する品質', body,
+               desc='上から「システム：業務フロー。保証：支援技術を使用して業務を完遂できること」「個別画面：顧客検索・顧客登録・契約一覧・契約詳細。保証：文脈に応じたラベル・配置・画面遷移・エラー通知」「デザインシステム（検証済みを再利用）：Button・Input・Dialog・Select・Checkbox・Tabs。保証：Role・ARIA・キー操作・フォーカス管理・基本配色」の3層を積んだ図')
 
 
 # =====================================================================
-# §4.2 開発レーンの健全性と品質保証の作業量
+# §8.2 入力コンポーネントの状態ごとの検査
 # =====================================================================
-def fig_04_flow_health_vs_qa_load():
-    body = [title('タスクの進捗が健全でも、品質保証に必要な作業量は別に増えていく')]
-    body.append(rect(60, 90, 880, 116, PRIMARY, LINE, 1))
-    body.append(text(80, 116, '通常の開発レーン：IssueやMRの滞留を監視する', 15, 700, PRI_TEXT, 'start'))
-    body.append(arrow(140, 158, 735, 158))
-    for i, s in enumerate(['タスクA', 'タスクB', 'タスクC', 'タスクD']):
-        body.append(pill(80 + i * 160, 140, 140, 36, s, BG, 14, 700, T1, LINE))
-    body.append(pill(760, 140, 160, 36, '滞留なし・順調', POSITIVE, 14, 700, POS_TEXT, POS_LINE))
-    body.append(arrow(500, 206, 500, 268, dashed=True, color=ATT_LINE, width=2))
-    body.append(text(520, 243, '統合して品質を保証する作業は、まだタスク化されずに繰り越される', 14, 700, ATT_TEXT, 'start'))
-    body.append(rect(60, 270, 880, 130, ATTENTION, ATT_LINE, 1))
-    body.append(text(80, 296, 'リリーススプリント：成果物を横断した品質保証', 15, 700, ATT_TEXT, 'start'))
-    for i, s in enumerate(['整合性確認', '依存関係の把握', '変更影響の分析', '回帰テスト', '不具合調査']):
-        body.append(pill(80 + i * 170, 318, 160, 36, s, BG, 14, 700, ATT_TEXT, ATT_LINE))
-    body.append(text(500, 384, '必要な作業量は事前に見積もりにくく、開発の進行とともに増える', 14, 400, T2))
-    body.append(note(438, 'IssueやMRの滞留だけでは、まだタスク化されていない整合性確認や理解負債は見えない'))
-    return svg(1000, 466, '開発レーンの健全性と品質保証の作業量', body,
-               desc='上段の「通常の開発レーン：IssueやMRの滞留を監視する」ではタスクA〜Dが左から右へ順調に流れ、右端に「滞留なし・順調」とある。そこから下段へ「統合して品質を保証する作業は、まだタスク化されずに繰り越される」という破線の矢印が下り、下段の「リリーススプリント：成果物を横断した品質保証」には整合性確認、依存関係の把握、変更影響の分析、回帰テスト、不具合調査が並び、「必要な作業量は事前に見積もりにくく、開発の進行とともに増える」とした図')
-
-
-# =====================================================================
-# §6 テスト自動化と AI 駆動開発の保守対象
-# =====================================================================
-def fig_06_sut_and_tas():
-    body = [title('テスト自動化は、SUTとは別にTASという保守対象を生む')]
-    body.append(box(130, 100, 280, 100, NEUTRAL, 'SUT', 'テスト対象のシステム', 22, 15, STROKE, 1, T1))
-    body.append(box(590, 100, 280, 100, NEUTRAL, 'TAS', 'テストを自動実行・制御するシステム', 22, 15, STROKE, 1, T1))
-    body.append(arrow(410, 150, 590, 150))
-    body.append(text(500, 136, '変更に合わせて保守する', 14, 700, T2))
-    body.append(text(500, 246, 'SUTが変われば、テストスクリプト・実行環境・データ・検証手順も変わる', 14, 700, T2))
-    body.append(note(296, '手動テストの削減は、TASの構築・保守という新しい負担と交換されている'))
-    return svg(1000, 326, 'SUTとTASの関係', body,
-               desc='左に「SUT（テスト対象のシステム）」、右に「TAS（テストを自動実行・制御するシステム）」を置き、「変更に合わせて保守する」矢印で結ぶ。下に「SUTが変われば、テストスクリプト・実行環境・データ・検証手順も変わる」と記した図')
-
-
-def fig_06_sud_and_ads():
-    body = [title('AI駆動開発では、SUDとADSの両方を保守し、ADSはTASを内包する')]
-    body.append(box(130, 121, 280, 100, PRIMARY, 'SUD', '開発対象のシステム', 22, 15, LINE, 1, PRI_TEXT))
-    body.append(rect(590, 96, 280, 150, AI, AI_LINE, 1))
-    body.append(text(730, 124, 'ADS', 22, 700, AI_TEXT))
-    body.append(rect(605, 136, 250, 46, BG, AI_LINE, 1, rx=8))
-    body.append(lines(730, 155, [('生成の仕組み', 700, AI_TEXT), ('SKILL・rules・手順', 400, T2)], 14, lh=18))
-    body.append(rect(605, 190, 250, 46, BG, AI_LINE, 1, rx=8))
-    body.append(lines(730, 209, [('検証の仕組み（TAS）', 700, AI_TEXT), ('実行基盤・テストデータ・接続', 400, T2)], 14, lh=18))
-    body.append(arrow(410, 171, 590, 171))
-    body.append(lines(500, 143, ['変化に合わせて', '両方を保守する'], 14, 700, T2, lh=18))
-    body.append(bracket(130, 870, 262, '保守する対象が二重になり、ADSはTASを内包する', ATT_TEXT, 15, 700, up=False))
-    body.append(note(334, 'SUDの変化はADSの生成と検証の両方の修正を要求し、ADSの変化はSUDの再検証を要求する'))
-    return svg(1000, 364, 'AI駆動開発の保守対象', body,
-               desc='左に「SUD（開発対象のシステム）」、右に「ADS」を置き、「変化に合わせて両方を保守する」矢印で結ぶ。ADSの箱は「生成の仕組み（SKILL・rules・手順）」と「検証の仕組み（TAS：実行基盤・テストデータ・接続）」の2区画に分かれ、2箱をブラケットで束ねて「保守する対象が二重になり、ADSはTASを内包する」とした図')
+def fig_08_component_states():
+    body = [title('状態ごとにStoryを定義し、各状態をaxe-coreで検査する')]
+    xs = [60, 290, 520, 750]
+    w, y, h = 190, 96, 124
+    states = [('Default', 'メールアドレス', 'user@example.com', T1, None),
+              ('Required', 'メールアドレス *', '未入力', MUTED, None),
+              ('Error', 'メールアドレス', 'abc', T1, '形式が正しくありません'),
+              ('Disabled', 'メールアドレス', 'user@example.com', MUTED, None)]
+    for x, (name, label, value, vcol, err) in zip(xs, states):
+        body.append(rect(x, y, w, h, NEUTRAL, STROKE, 1))
+        body.append(text(x + w / 2, y + 24, name, 15, 700, T1))
+        body.append(text(x + 15, y + 48, label, 14, 400, T1, 'start'))
+        body.append(rect(x + 15, y + 56, 160, 30, WATER if name == 'Disabled' else BG, ATT_LINE if err else STROKE, 1, rx=6))
+        body.append(text(x + 23, y + 76, value, 14, 400, vcol, 'start'))
+        if err:
+            body.append(text(x + 15, y + 108, err, 14, 400, ATT_TEXT, 'start'))
+        body.append(arrow(x + w / 2, y + h, x + w / 2, 254))
+    body.append(box(60, 254, 880, 56, PRIMARY, 'axe-coreによる各Storyの検査', 'ラベルの関連付け・ARIA属性・コントラスト', 16, 14, LINE, 1, PRI_TEXT))
+    body.append(note(350, 'Loading・モーダル表示なども、状態として定義しなければ検査されない'))
+    return svg(1000, 378, '入力コンポーネントの状態ごとの検査', body,
+               desc='入力コンポーネントの4つの状態「Default（user@example.com）」「Required（必須の印付きで未入力）」「Error（abc、形式が正しくありません）」「Disabled（非活性）」を小さな枠で並べ、それぞれから下の「axe-coreによる各Storyの検査（ラベルの関連付け・ARIA属性・コントラスト）」へ矢印を引いた図')
 
 
 # =====================================================================
-# §6 SUD と ADS の定義
+# §8.5 ダイアログのフォーカス移動
 # =====================================================================
-def fig_06_sud_ads_definition():
-    body = [title('開発対象のSUDと、生成と検証の仕組みからなるADS')]
-    body.append(rect(60, 90, 420, 230, PRIMARY, LINE, 1))
-    body.append(text(270, 150, 'SUD', 22, 700, PRI_TEXT))
-    body.append(text(270, 176, 'System Under Development', 14, 400, T2))
-    body.append(text(270, 206, '開発対象のシステム', 15, 700, T1))
-    body.append(text(270, 246, 'ADSが生成し、動かし、確かめる対象', 14, 400, MUTED))
-    body.append(rect(520, 90, 420, 230, AI, AI_LINE, 1))
-    body.append(text(730, 118, 'ADS', 22, 700, AI_TEXT))
-    body.append(text(730, 140, 'AI-driven Development System', 14, 400, T2))
-    body.append(rect(540, 154, 380, 68, BG, AI_LINE, 1, rx=8))
-    body.append(lines(730, 180, [('生成の仕組み', 700, AI_TEXT), ('SKILL・rules・入力ファイル・ツール連携・開発手順', 400, T1)], 14, lh=20))
-    body.append(rect(540, 236, 380, 68, BG, AI_LINE, 1, rx=8))
-    body.append(lines(730, 258, [('検証の仕組み（TAS）', 700, AI_TEXT), ('テスト実行基盤・テストデータ・結果取得', 400, T1), ('AIと対象環境の接続', 400, T1)], 14, lh=20))
-    body.append(note(358, 'SUD・ADSは本稿での説明用の仮称。SUTとSUDは、同じシステムをテスト対象と開発対象のどちらから見るかの違い'))
-    return svg(1000, 388, 'SUDとADSの定義', body,
-               desc='左に「SUD（System Under Development）：開発対象のシステム。ADSが生成し、動かし、確かめる対象」、右に「ADS（AI-driven Development System）」を置き、ADSの中を「生成の仕組み（SKILL・rules・入力ファイル・ツール連携・開発手順）」と「検証の仕組み（TAS：テスト実行基盤・テストデータ・結果取得、AIと対象環境の接続）」の2区画で示した図')
-
-
-# =====================================================================
-# §6 AI と CI・テスト環境の接続（参考記事の図 07c に倣う）
-# =====================================================================
-def fig_06_ai_ci_test_env():
-    body = [title('AIがCIとテスト環境につながって初めて、生成した成果物を動かし、確かめられる')]
-    body.append(box(60, 150, 140, 80, NEUTRAL, 'CI', '定期実行・起動', 17, 14))
-    body.append(arrow(200, 190, 320, 190, width=2))
-    body.append(text(260, 174, 'CIとAIの接続', 14, 700, T1))
-    body.append(rect(320, 130, 240, 120, AI, AI_LINE, 2))
-    body.append(lines(440, 170, [('AIエージェント', 700, AI_TEXT), ('生成・実行・修復を担う', 400, T2), ('ADSの中核', 400, T2)], 15, lh=22))
-    body.append(rect(640, 90, 300, 240, PRIMARY, LINE, 2))
-    body.append(text(790, 118, 'テスト環境', 17, 700, PRI_TEXT))
-    body.append(rect(660, 136, 260, 70, BG, STROKE, 1))
-    body.append(lines(790, 162, [('ブラウザ・対象環境（SUD）', 700, T1), ('操作してSUDを動かせること', 400, T2)], 14, lh=20))
-    body.append(rect(660, 236, 260, 70, BG, STROKE, 1))
-    body.append(lines(790, 262, [('DB・バッチの実行結果', 700, T1), ('結果を確かめられること', 400, T2)], 14, lh=20))
-    body.append(arrow(560, 170, 660, 171, width=2))
-    body.append(text(610, 156, '動かす', 14, 700, T1))
-    body.append(arrow(560, 210, 660, 271, width=2))
-    body.append(text(596, 250, '確かめる', 14, 700, T1))
-    body.append(rect(60, 350, 880, 56, BG, ATT_LINE, 2, dashed=True))
-    body.append(lines(500, 373, [('この接続の構築と維持がTASの領域であり、ADSの一部', 700, ATT_TEXT), ('どれかが欠けると、AIは成果物を動かすことも、結果を確かめることもできない', 400, T2)], 14, lh=19))
-    body.append(note(450, 'SKILLやrulesを整えるだけでは足りない。AIがCIとテスト環境につながる接続が、ADSの継続運用の要になる'))
-    return svg(1000, 476, 'AIとCI・テスト環境の接続', body,
-               desc='中央のAIエージェント（生成・実行・修復を担う、ADSの中核）に対して、左からCI（定期実行・起動）との接続、右へテスト環境との接続（SUDを動かすためのブラウザ・対象環境、結果を確かめるためのDB・バッチの実行結果）を描き、下段にこの接続の構築と維持がTASの領域でありADSの一部であることを示した図')
+def fig_09_dialog_focus_flow():
+    body = [title('開いたら最初の項目へフォーカスが移り、閉じたら元のボタンへ戻る')]
+    body.append(pill(60, 150, 140, 44, '編集ボタン', NEUTRAL, 15, 700, T1))
+    body.append(rect(280, 96, 440, 180, BG, LINE, 1))
+    body.append(text(500, 124, 'ダイアログ', 16, 700, T1))
+    body.append(pill(310, 150, 160, 44, '顧客名', PRIMARY, 15, 700, PRI_TEXT, LINE))
+    body.append(pill(530, 150, 170, 44, 'メールアドレス', NEUTRAL, 15, 700, T1))
+    body.append(arrow(200, 172, 310, 172))
+    body.append(text(255, 160, '① 開く', 14, 700, T2))
+    body.append(arrow(470, 172, 530, 172))
+    body.append(text(500, 160, '② Tab', 14, 700, T2))
+    body.append(text(390, 222, '開いた直後のフォーカス', 14, 400, PRI_TEXT))
+    body.append(text(615, 222, 'Tabで次の項目へ', 14, 400, T2))
+    body.append(path_arrow('M500 276 V312 H130 V206', (130, 200, 0, -1), dashed=True))
+    body.append(text(315, 336, '③ Escapeで閉じると、フォーカスは開く前のボタンに戻る', 14, 700, T2))
+    body.append(note(382, 'フォーカスが消えると、キーボード利用者は現在位置を見失う。axe-coreだけでは検証できない'))
+    return svg(1000, 410, 'ダイアログのフォーカス移動', body,
+               desc='左の「編集ボタン」から「① 開く」の矢印でダイアログ内の「顧客名」（開いた直後のフォーカス）へ、「② Tab」の矢印で「メールアドレス」へ進み、ダイアログの下から破線の矢印で「③ Escapeで閉じると、フォーカスは開く前のボタンに戻る」と編集ボタンへ戻る図')
 
 
 # =====================================================================
-# §6 ADS の構築・保守で発生する作業
+# §10 実行タイミングと品質ゲート
 # =====================================================================
-def fig_06b_ads_maintenance_work():
-    body = [title('ADSの保守は、SUDの機能開発ではないが、AI駆動開発を続けるために必要な作業')]
-    body.append(rect(130, 90, 740, 44, PRIMARY, LINE, 1))
-    body.append(text(500, 118, 'SUDの機能開発：成果物を直接作る作業（見積もりに入っている）', 15, 700, PRI_TEXT))
-    body.append(rect(130, 156, 740, 230, AI, AI_LINE, 1))
-    body.append(text(500, 182, 'ADSの構築・保守：開発を続けるために必要な作業', 15, 700, AI_TEXT))
-    body.append(rect(150, 196, 350, 176, BG, AI_LINE, 1, rx=8))
-    body.append(text(325, 220, '生成の仕組み', 15, 700, AI_TEXT))
-    body.append(lines(325, 246, ['構成変更に合わせてSKILLを修正', '品質問題に応じてrulesを見直す', '入力ファイルの形式・構成を変更', 'モデル・ツール変更に合わせ手順を更新', 'ADS変更後の生成結果の劣化を検証'], 14, 400, T1, lh=22))
-    body.append(rect(520, 196, 330, 176, BG, AI_LINE, 1, rx=8))
-    body.append(text(685, 220, '検証の仕組み（TAS）', 15, 700, AI_TEXT))
-    body.append(lines(685, 246, ['SUDの変更に合わせテストを修正', 'Runner・ブラウザ・ライブラリ・データの維持', 'AIがSUDを動かし結果を確かめる接続の維持'], 14, 400, T1, lh=22))
-    body.append(text(500, 416, 'このコストはまだ十分に見積もれておらず、当初の想定より大きい可能性がある', 15, 700, ATT_TEXT))
-    body.append(note(456, 'SUDが変わるたびに、生成の仕組みと検証の仕組みの両方に追従作業が発生する'))
-    return svg(1000, 486, 'ADSの構築・保守で発生する作業', body,
-               desc='上に「SUDの機能開発：成果物を直接作る作業（見積もりに入っている）」の帯、その下に「ADSの構築・保守：開発を続けるために必要な作業」の枠を置く。枠の中は左「生成の仕組み」（構成変更に合わせてSKILLを修正、品質問題に応じてrulesを見直す、入力ファイルの形式・構成を変更、モデル・ツール変更に合わせ手順を更新、ADS変更後の生成結果の劣化を検証）と右「検証の仕組み（TAS）」（SUDの変更に合わせテストを修正、Runner・ブラウザ・ライブラリ・データの維持、AIがSUDを動かし結果を確かめる接続の維持）に分かれ、下に「このコストはまだ十分に見積もれておらず、当初の想定より大きい可能性がある」と記した図')
-
-
-# =====================================================================
-# §6.1 AI が下げる費目と残る費目
-# =====================================================================
-def fig_06a_ads_cost_items():
-    body = [title('AIが下げるのは作成の費目で、基盤・接続・運用の費目は残る')]
-    body.append(pill(190, 90, 300, 34, 'AIが下げる費目', POSITIVE, 15, 700, POS_TEXT, POS_LINE))
-    body.append(pill(520, 90, 420, 34, '残る費目', ATTENTION, 15, 700, ATT_TEXT, ATT_LINE))
-    rows = [('TAS', 'テスト自動化', 140, ['テスト設計・実装', 'テスト修復'],
-             ['実行基盤の構築', 'Runner・ブラウザ・データの維持', 'AIと環境の接続', '定期実行・障害対応、利用料']),
-            ('ADS', 'AI駆動開発', 270, ['SKILL・rules・手順の作成', '生成結果の修正'],
-             ['実行環境と接続の構築', 'モデル・ツール変更への追従', '生成・検証の運用と監視', '利用料'])]
-    for head, sub, y, left, right in rows:
-        body.append(lines(60, y + 52, [(head, 700, T1), (sub, 400, T2)], 15, anchor='start', lh=20))
-        body.append(rect(190, y, 300, 110, NEUTRAL))
-        body.append(lines(340, y + 60 - (len(left) - 1) * 11, left, 14, 400, T1, lh=22))
-        body.append(rect(520, y, 420, 110, NEUTRAL))
-        body.append(lines(730, y + 60 - (len(right) - 1) * 11, right, 14, 400, T1, lh=22))
-    body.append(note(420, '費目の構造は同じで、AIが減らすのは左の列だけ。右の列を共通基盤に寄せられるかで案件の負担が変わる'))
-    return svg(1000, 450, 'AIが下げる費目と残る費目', body,
-               desc='「AIが下げる費目」と「残る費目」の2列に、TAS（テスト自動化）の行とADS（AI駆動開発）の行を並べる。TASの行は、下げる費目がテスト設計・実装とテスト修復、残る費目が実行基盤の構築、Runner・ブラウザ・データの維持、AIと環境の接続、定期実行・障害対応、利用料。ADSの行は、下げる費目がSKILL・rules・手順の作成と生成結果の修正、残る費目が実行環境と接続の構築、モデル・ツール変更への追従、生成・検証の運用と監視、利用料とした図')
+def fig_10_ci_pipeline():
+    body = [title('自動テストはコミットからビルド後まで段階的に走り、リリース前は人が確認する')]
+    ch, cols = chain(60, 96, ['コミット時', 'PR／MR時', 'ビルド後', 'リリース前'], total_w=880,
+                     fills={3: HUMAN}, colors={3: HUM_TEXT}, strokes={3: HUM_LINE})
+    body.append(ch)
+    pw = cols[0][1]
+    y, h = 160, 120
+    body.append(card(cols[0][0], y, pw, h, PRIMARY, 'ESLint（jsx-a11y）', ['静的な実装ルール違反', 'ゲート：Lintエラー0件'], hs=16, rs=14, stroke=LINE, head_fill=PRI_TEXT, top=28, lh=22))
+    body.append(card(cols[1][0], y, pw, h, PRIMARY, 'Vitest・Storybook', ['axe-core', 'コンポーネントの状態・操作', 'ゲート：自動検査違反0件'], hs=16, rs=14, stroke=LINE, head_fill=PRI_TEXT, top=28, lh=22))
+    body.append(card(cols[2][0], y, pw, h, PRIMARY, 'Playwright', ['axe-core・MSW', '画面構造・キー操作・遷移', 'ゲート：違反0件・成功'], hs=16, rs=14, stroke=LINE, head_fill=PRI_TEXT, top=28, lh=22))
+    body.append(card(cols[3][0], y, pw, h, HUMAN, 'NVDA・VoiceOver', ['手動評価', '主要業務を支援技術で検証', 'ゲート：適合評価完了'], hs=16, rs=14, stroke=HUM_LINE, head_fill=HUM_TEXT, top=28, lh=22))
+    body.append(bracket(cols[0][0], cols[2][0] + pw, 302, '自動テスト：毎回実行できる', POS_TEXT, 15, 700, up=False))
+    body.append(bracket(cols[3][0], cols[3][0] + pw, 302, '人・支援技術', HUM_TEXT, 15, 700, up=False))
+    body.append(note(378, '既存システムでは、既知の違反を管理し、新規違反を増やさない回帰防止方式から始める'))
+    return svg(1000, 406, '実行タイミングと品質ゲート', body,
+               desc='コミット時、PR／MR時、ビルド後、リリース前の4つのタイミングを左から右へ1本の矢印でつなぎ、それぞれ「ESLint（jsx-a11y）：静的な実装ルール違反、ゲートはLintエラー0件」「Vitest・Storybook：axe-core、コンポーネントの状態・操作、ゲートは自動検査違反0件」「Playwright：axe-core・MSW、画面構造・キー操作・遷移、ゲートは違反0件・成功」「NVDA・VoiceOver：手動評価、主要業務を支援技術で検証、ゲートは適合評価完了」のカードを置き、左3列を「自動テスト：毎回実行できる」、右1列を「人・支援技術」のブラケットで括った図')
 
 
 # =====================================================================
-# §6.1 CI/CD 成熟度と ADS の運用負荷（参考記事の図 07b に倣う）
+# §12 4層の標準化
 # =====================================================================
-def fig_06c_cicd_maturity():
-    body = [title('CI/CD成熟度が低いと、生成を速くしてもADSの運用負荷は下がらない')]
-    body.append(text(60, 92, 'CI/CD成熟度が低い組織の状態', 14, 700, MUTED, 'start'))
-    for i, s_ in enumerate(['案件ごとにRunnerを立てる', '標準構成がない', 'パイプラインの失敗を診断できる人が限られる']):
-        y = 108 + i * 64
-        body.append(pill(60, y, 380, 40, s_, NEUTRAL, 14, 400, T1))
-        body.append(arrow(440, y + 20, 520, 196, width=2))
-    body.append(rect(520, 100, 420, 192, ATTENTION, ATT_LINE, 2))
-    body.append(lines(730, 134, [('ADSの構築・保守コストは', 700, ATT_TEXT), ('案件ごとに高いまま', 700, ATT_TEXT)], 16, lh=22))
-    body.append(lines(540, 192, ['・実行環境と接続の構築が案件ごとに発生する', '・設定の整備と更新を各案件が抱える', '・失敗時の切り分けが特定の人に集中する'], 14, anchor='start', lh=24))
-    body.append(rect(520, 330, 280, 56, AI, AI_LINE, 2))
-    body.append(lines(660, 352, [('SKILL・テストコードの生成', 700, AI_TEXT), ('AIエージェントで容易になった', 400, T2)], 14, lh=19))
-    body.append(path_arrow('M660 330 V300', (660, 298, 0, -1), color=AI_LINE, dashed=True, width=2))
-    body.append(text(816, 362, '下げるのは作成部分だけ', 14, 700, T1, 'start'))
-    body.append(note(438, '共通の実行基盤・標準設定・運用手順・障害対応体制が整って初めて、残る費目を共通基盤に寄せられる'))
-    return svg(1000, 464, 'CI/CD成熟度とADSの運用負荷', body,
-               desc='案件ごとにRunnerを立てる、標準構成がない、パイプラインの失敗を診断できる人が限られる、という3つの状態からADSの構築・保守コストが案件ごとに高いままになること（実行環境と接続の構築が案件ごとに発生する、設定の整備と更新を各案件が抱える、失敗時の切り分けが特定の人に集中する）を示し、SKILL・テストコードの生成がAIで容易になっても下げるのは作成部分だけであることを添えた図')
-
-
-# =====================================================================
-# §7 3種類のコストの連鎖
-# =====================================================================
-def fig_07_three_costs_cycle():
-    body = [title('3種類のコストは独立ではなく、連鎖する')]
-    body.append(card(365, 90, 270, 90, AI, 'ADSの構築・保守コスト', ['SKILL・rules・手順の整備、', 'TASの構築・運用'], hs=17, rs=14, stroke=AI_LINE, head_fill=AI_TEXT, top=28, lh=20))
-    body.append(card(670, 270, 270, 90, ATTENTION, 'SUDの理解負債に伴うコスト', ['設計意図の復元、依存関係の調査、', '変更影響の分析'], hs=17, rs=14, stroke=ATT_LINE, head_fill=ATT_TEXT, top=28, lh=20))
-    body.append(card(60, 270, 270, 90, ATTENTION, '横断的な品質保証コスト', ['成果物間の整合性確認、', '回帰テスト、不具合調査'], hs=17, rs=14, stroke=ATT_LINE, head_fill=ATT_TEXT, top=28, lh=20))
-    body.append(arrow(600, 180, 805, 270))
-    body.append(lines(850, 196, ['ADSの品質が不十分だと', '理解負債が蓄積しやすい'], 14, 700, T2, lh=18))
-    body.append(arrow(670, 315, 330, 315))
-    body.append(text(500, 300, '理解負債が増えると、品質保証コストが増える', 14, 700, T2))
-    body.append(arrow(195, 270, 365, 150, dashed=True))
-    body.append(lines(150, 196, ['問題の解決には', 'ADSの修正が必要になる'], 14, 700, T2, lh=18))
-    body.append(text(500, 254, '開発対象と開発する仕組みの両方を継続的に進化させる', 15, 700, T1))
-    body.append(note(408, 'ADSを整備すればSUDの理解負債が自動的に解消されるわけではない。両者の品質をそれぞれ管理する'))
-    return svg(1000, 440, '3種類のコストの連鎖', body,
-               desc='上に「ADSの構築・保守コスト（SKILL・rules・ツール連携・開発手順の整備と更新）」、右下に「SUDの理解負債に伴うコスト（設計意図の復元、依存関係の調査、変更影響の分析）」、左下に「横断的な品質保証コスト（成果物間の整合性確認、回帰テスト、不具合調査）」を置き、「ADSの品質が不十分だと理解負債が蓄積しやすい」「理解負債が増えると、品質保証コストが増える」の矢印で順につなぎ、左下から上へ「問題の解決にはADSの修正が必要になる」という破線の矢印で戻る循環を示し、中央に「開発対象と開発する仕組みの両方を継続的に進化させる」と記した図')
+def fig_11_four_layers():
+    body = [title('4つの層は4つの観点に対応し、下の層ほど開発中に何度でも実行できる')]
+    rows = [
+        (HUMAN, HUM_LINE, HUM_TEXT, '人・支援技術', '観点：業務の遂行可能性', '情報を理解し、実際に業務を遂行できる'),
+        (PRIMARY, LINE, PRI_TEXT, 'Playwright', '観点：操作可能性', '期待する操作・状態遷移が成立する'),
+        (PRIMARY, LINE, PRI_TEXT, 'axe-core', '観点：情報の認識可能性', '描画されたUIに機械検出可能な違反がない'),
+        (PRIMARY, LINE, PRI_TEXT, '静的解析', '観点：実装の妥当性', '実装ルールに違反していない'),
+    ]
+    s, ys = stack(92, rows)
+    body.append(s)
+    body.append(text(255, 84, '層', 14, 700, MUTED))
+    body.append(text(635, 84, '保証する品質', 14, 700, MUTED))
+    body.append(up_axis(880, 112, 332, '機会は限られる', '何度でも実行'))
+    body.append(note(384, '下の3層は自動テストとして開発中に繰り返し実行し、最上層は人がリリース前に確認する'))
+    return svg(1000, 412, '4層の標準化', body,
+               desc='上から「人・支援技術（観点：業務の遂行可能性）：情報を理解し、実際に業務を遂行できる」「Playwright（観点：操作可能性）：期待する操作・状態遷移が成立する」「axe-core（観点：情報の認識可能性）：描画されたUIに機械検出可能な違反がない」「静的解析（観点：実装の妥当性）：実装ルールに違反していない」の4層を積み、右端の下から上への矢印に「何度でも実行」から「機会は限られる」へと記した図')
 
 
 # =====================================================================
-# §8 工程間での制約の移動
+# 図の一覧（ファイル名 → 生成関数）。章番号で始める。
 # =====================================================================
-def fig_08_constraint_shift():
-    body = [title('実装の制約が解消されると、制約は統合・品質保証・リリースへ移動する')]
-    body.append(text(60, 131, '従来', 15, 700, T1, 'start'))
-    ch1, cols1 = chain(180, 106, ['設計', '実装（制約）', '統合', '品質保証', 'リリース'], total_w=760,
-                       fills={1: ATTENTION}, colors={1: ATT_TEXT}, strokes={1: ATT_LINE})
-    body.append(ch1)
-    body.append(text(60, 251, 'AI駆動開発', 15, 700, T1, 'start'))
-    att = {2: ATTENTION, 3: ATTENTION, 4: ATTENTION}
-    ch2, cols2 = chain(180, 226, ['設計', '実装（高速化）', '統合（制約）', '品質保証（制約）', 'リリース（制約）'], total_w=760,
-                       fills={1: POSITIVE, **att}, colors={1: POS_TEXT, 2: ATT_TEXT, 3: ATT_TEXT, 4: ATT_TEXT}, strokes={1: POS_LINE, 2: ATT_LINE, 3: ATT_LINE, 4: ATT_LINE})
-    body.append(ch2)
-    x_impl = cols1[1][0] + cols1[1][1] / 2
-    x_qa = cols2[3][0] + cols2[3][1] / 2
-    body.append(arrow(x_impl, 146, x_qa, 224, dashed=True, color=ATT_LINE, width=2))
-    body.append(text(520, 170, '制約が移動する', 14, 700, ATT_TEXT, 'start'))
-    body.append(bracket(cols2[2][0], cols2[4][0] + cols2[4][1], 280, '後続工程の処理能力を超えた生成は、未検証の成果物と整合性問題を蓄積する', ATT_TEXT, 14, 700, up=False))
-    body.append(note(352, '生成量を増やすことが、必ずしも案件全体の生産性向上につながらない'))
-    return svg(1000, 380, '工程間での制約の移動', body,
-               desc='設計、実装、統合、品質保証、リリースの5工程を左から右へ1本の矢印でつないだ鎖を上下2段に並べる。上段「従来」では実装が制約、下段「AI駆動開発」では実装が高速化され、統合・品質保証・リリースが制約になる。上段の実装から下段の品質保証へ「制約が移動する」破線の矢印を引き、下段の統合〜リリースをブラケットで束ねて「後続工程の処理能力を超えた生成は、未検証の成果物と整合性問題を蓄積する」とした図')
-
-
-# =====================================================================
-# §2.3 準備コストと理解負債の変化
-# =====================================================================
-def fig_02_two_costs():
-    body = [title('準備コストは再利用で小さくなり、理解負債は成果物の関係で増幅する')]
-    # 左：案件を重ねるほど準備コストが下がる
-    body.append(rect(60, 90, 420, 230, NEUTRAL))
-    body.append(text(270, 116, '前工程の準備コスト：案件を重ねるほど小さくできる', 15, 700, T1))
-    for i, h in enumerate((120, 90, 65)):
-        x = 90 + i * 130
-        body.append(rect(x, 290 - h, 90, h, ATTENTION, ATT_LINE, 1, rx=6))
-        body.append(text(x + 45, 290 - h / 2 + 5, '準備コスト', 14, 700, ATT_TEXT))
-        body.append(text(x + 45, 312, f'案件{i + 1}', 14, 400, T2))
-    body.append(arrow(135, 160, 395, 218, dashed=True, color=POS_LINE, width=2))
-    body.append(text(265, 150, 'SKILL・手順の再利用で低減', 14, 700, POS_TEXT))
-    # 右：成果物とその関係が増えるほど理解負債が増幅する
-    body.append(rect(520, 90, 420, 230, NEUTRAL))
-    body.append(text(730, 116, '後工程の理解負債：成果物の関係で増幅する', 15, 700, T1))
-    small = [(560, 170), (560, 230)]
-    many = [(700, 150), (820, 150), (760, 200), (700, 250), (820, 250)]
-    body.append(f'<path d="M595 200 V230" stroke="{ATT_LINE}" stroke-width="2" fill="none"/>')
-    for i, (x1, y1) in enumerate(many):
-        for x2, y2 in many[i + 1:]:
-            body.append(f'<path d="M{x1 + 35} {y1 + 15} L{x2 + 35} {y2 + 15}" stroke="{ATT_LINE}" stroke-width="2" fill="none"/>')
-    for x, y in small + many:
-        body.append(rect(x, y, 70, 30, PRIMARY, LINE, 1, rx=6))
-        body.append(text(x + 35, y + 20, '成果物', 14, 700, PRI_TEXT))
-    body.append(arrow(640, 215, 690, 215))
-    body.append(text(730, 312, '関係が増えるほど、どこに問題があるかの把握が難しくなる', 14, 400, T2))
-    body.append(note(358, '標準化で下げられるのは準備コストの側であり、放置すると増幅するのは理解負債の側である'))
-    return svg(1000, 388, '準備コストと理解負債の変化', body,
-               desc='左の「前工程の準備コスト：案件を重ねるほど小さくできる」では、案件1・案件2・案件3の準備コストの箱が順に低くなり、「SKILL・手順の再利用で低減」の破線矢印が添えてある。右の「後工程の理解負債：成果物の関係で増幅する」では、成果物2つが1本の線でつながる状態から、成果物5つが互いに線でつながる状態へ矢印が向かい、「関係が増えるほど、どこに問題があるかの把握が難しくなる」とした図')
-
-
-# =====================================================================
-# §9 4つの方向性が効く場所
-# =====================================================================
-def fig_09_directions():
-    body = [title('4つの方向性は、SUD・ADS・その間・案件間のどこに効くかで整理できる')]
-    body.append(card(130, 90, 280, 70, NEUTRAL, '成果物と設計判断を結び付ける', ['追跡・検証できる状態にする'], hs=15, rs=14, top=26, lh=20))
-    body.append(card(590, 90, 280, 70, NEUTRAL, 'ADSに品質保証を組み込む', ['TASによる回帰テストと整合性チェック'], hs=15, rs=14, top=26, lh=20))
-    body.append(arrow(270, 160, 270, 196, width=2))
-    body.append(arrow(730, 160, 730, 196, width=2))
-    body.append(sud_ads(200, x1=130, x2=590))
-    body.append(arrow(410, 250, 590, 250))
-    body.append(text(500, 236, '変化に合わせて保守', 14, 700, T2))
-    body.append(card(130, 340, 280, 70, NEUTRAL, '品質保証の作業量を可視化する', ['SUDとADSの間で増える作業を観測する'], hs=15, rs=14, top=26, lh=20))
-    body.append(path_arrow('M270 340 V322 H500 V266', (500, 262, 0, -1), LINE, dashed=True, width=2))
-    body.append(card(590, 340, 280, 70, NEUTRAL, '改善を案件間で再利用する', ['TAS・CI/CDの共通基盤と運用チーム'], hs=15, rs=14, top=26, lh=20))
-    body.append(arrow(730, 300, 730, 336, width=2))
-    body.append(note(450, 'いずれも、理解負債を後工程でまとめて返済する運営からの転換を目指す'))
-    return svg(1000, 480, '4つの方向性が効く場所', body,
-               desc='中央に「SUD（開発対象のシステム）」と「ADS（SKILL・rules・手順＋TAS）」の2箱を置き、SUDの上から「成果物と設計判断を結び付ける（追跡・検証できる状態にする）」、ADSの上から「ADSに品質保証を組み込む（TASによる回帰テストと整合性チェック）」が矢印で各箱に向かう。SUDの下の「品質保証の作業量を可視化する（SUDとADSの間で増える作業を観測する）」は破線で2箱の間の矢印を指し、ADSの下の「改善を案件間で再利用する（TAS・CI/CDの共通基盤と運用チーム）」へはADSから矢印が出る図')
-
-
-# =====================================================================
-# §2.2 理解負債の定義
-# =====================================================================
-def fig_02a_understanding_debt():
-    body = [title('生成は速く、理解・検証は遅い。その差は時間とともに積み上がる')]
-    body.append(f'<polygon points="120,300 900,90 900,230" fill="{ATTENTION}"/>')
-    body.append(f'<path d="M120 300 L900 90" stroke="{AI_LINE}" stroke-width="4" fill="none"/>')
-    body.append(f'<path d="M120 300 L900 230" stroke="{LINE}" stroke-width="4" fill="none"/>')
-    body.append(arrow(120, 300, 940, 300, color=STROKE, width=2))
-    body.append(arrow(120, 300, 120, 94, color=STROKE, width=2))
-    body.append(text(120, 84, '成果物の量', 14, 400, MUTED))
-    body.append(text(530, 324, '開発の進行', 14, 400, MUTED))
-    body.append(text(520, 150, '生成された成果物（AI）', 15, 700, AI_TEXT))
-    body.append(text(600, 286, '理解・検証が済んだ成果物（人間）', 15, 700, T1))
-    body.append(text(780, 190, '理解負債', 18, 700, ATT_TEXT))
-    body.append(text(780, 210, '未理解・未検証の成果物の蓄積', 14, 400, ATT_TEXT))
-    body.append(note(362, '生成が速いほど、理解・検証が追いつかない成果物が増える。この差が後工程のコストになる'))
-    return svg(1000, 392, '生成と理解・検証の差の蓄積', body,
-               desc='横軸を開発の進行、縦軸を成果物の量として、原点から「生成された成果物（AI）」の線が急な傾きで、「理解・検証が済んだ成果物（人間）」の線が緩い傾きで伸びる。2本の線の間の開きが時間とともに広がり、その領域を塗って「理解負債：未理解・未検証の成果物の蓄積」と記した図')
-
-
-# =====================================================================
-# §5 従来の保守開発と AI 駆動開発での顕在化の速さ
-# =====================================================================
-def fig_05_gradual_vs_compressed():
-    body = [title('従来は徐々に顕在化していた問題が、AI駆動開発では短い期間に集中する')]
-    panels = [(60, '従来の保守開発：徐々に顕在化', [85, 155, 225, 295, 365], 60, 230, '時間（数年）', '変更影響の調査・回帰テストの範囲が、年単位で広がる'),
-              (520, 'AI駆動開発：短い期間に集中', [545, 603, 661, 719, 777], 56, 180, '時間（数か月）', '同じ範囲の広がりが、短い期間に集中して現れる')]
-    for px, head, xs, w, wedge_top, unit, caption in panels:
-        body.append(rect(px, 90, 420, 250, NEUTRAL))
-        body.append(text(px + 210, 116, head, 15, 700, T1))
-        last = xs[-1] + w
-        body.append(f'<polygon points="{xs[0]},262 {last + 10},262 {last + 10},{wedge_top}" fill="{ATTENTION}"/>')
-        for x in xs:
-            body.append(rect(x, 150, w, 30, PRIMARY, LINE, 1, rx=6))
-            body.append(text(x + w / 2, 170, '成果物', 14, 700, PRI_TEXT))
-        body.append(arrow(px + 20, 270, px + 400, 270))
-        body.append(text(px + 400, 292, unit, 14, 400, MUTED, 'end'))
-        body.append(text(px + 210, 320, caption, 14, 700, ATT_TEXT))
-    body.append(note(376, '従来の見積もり・管理の経験は参考になるが、体系化されていたわけではなく、生成速度の変化を前提に見直す'))
-    return svg(1000, 404, '従来とAI駆動開発での顕在化の速さ', body,
-               desc='左の「従来の保守開発：徐々に顕在化」では、時間軸の上に成果物の箱が間隔を空けて5つ並び、その下で「変更影響の調査・回帰テストの範囲」のくさびが年単位で緩やかに広がる。右の「AI駆動開発：短い期間に集中」では、同じ5つの箱が詰まって並び、くさびが短い区間で急に広がって「同じ範囲の広がりが、短い期間に集中して現れる」と記した図')
-
-
-# =====================================================================
-# §9.1 成果物と情報が結びついた状態
-# =====================================================================
-def fig_09a_traceable_artifacts():
-    body = [title('必要な情報が成果物と結びつき、変更時にも追跡・検証できる状態')]
-    body.append(bracket(60, 940, 100, 'SSoT：唯一の正本として管理し、成果物からたどれるようにする', T2, 14, 700, up=True))
-    boxes = [('要求', 'どの要求に基づくか', NEUTRAL, STROKE, T1), ('設計判断', '背景と意図の記録', NEUTRAL, STROKE, T1),
-             ('成果物', 'AIが生成したもの', PRIMARY, LINE, PRI_TEXT), ('検証結果・未解決事項', '何が未検証か', NEUTRAL, STROKE, T1)]
-    for i, (head, sub, fill, stroke, hf) in enumerate(boxes):
-        x = 60 + i * 230
-        body.append(box(x, 120, 200, 80, fill, head, sub, 18, 14, stroke, 1, hf))
-        if i < 3:
-            body.append(arrow(x + 200, 160, x + 230, 160))
-    body.append(pill(290, 240, 190, 34, '設計判断の変更', ATTENTION, 14, 700, ATT_TEXT, ATT_LINE))
-    body.append(path_arrow('M480 252 H620 V204', (620, 204, 0, -1), ATT_LINE, dashed=True, width=2))
-    body.append(path_arrow('M480 262 H850 V204', (850, 204, 0, -1), ATT_LINE, dashed=True, width=2))
-    body.append(text(680, 290, '影響する成果物と検証結果を特定し、再検証する', 14, 700, ATT_TEXT))
-    body.append(note(336, 'ドキュメントを増やすのではなく、成果物と情報の結びつきを保つことで、後工程でまとめて返済する運営から転換する'))
-    return svg(1000, 366, '成果物と情報が結びついた状態', body,
-               desc='「要求（どの要求に基づくか）」「設計判断（背景と意図の記録）」「成果物（AIが生成したもの）」「検証結果・未解決事項（何が未検証か）」の4箱を左から右へ矢印でつなぎ、全体の上に「SSoT：唯一の正本として管理し、成果物からたどれるようにする」のブラケットを置く。設計判断の下の「設計判断の変更」から成果物と検証結果へ破線の矢印を引き、「影響する成果物と検証結果を特定し、再検証する」と記した図')
-
-
-# =====================================================================
-# §10 従来と AI 駆動開発の原価の積み上げ
-# =====================================================================
-def fig_10_estimate_structure():
-    body = [title('実装の削減だけでなく、前工程・後工程・ADSの増加を別々に積み上げる')]
-    base = 430
-    def stack(x, segs, label):
-        y = base
-        out = []
-        for name, h, fill, stroke, color in segs:
-            y -= h
-            out.append(rect(x, y, 200, h, fill, stroke, 1, rx=4))
-            out.append(text(x + 100, y + h / 2 + 5, name, 14, 700, color))
-        out.append(text(x + 100, base + 24, label, 15, 700, T1))
-        return ''.join(out), y
-    left, top_l = stack(230, [('設計', 50, NEUTRAL, STROKE, T1), ('実装', 110, NEUTRAL, STROKE, T1), ('テスト', 70, NEUTRAL, STROKE, T1), ('リリース', 40, NEUTRAL, STROKE, T1)], '従来の積み上げ')
-    right, top_r = stack(570, [('設計', 42, NEUTRAL, STROKE, T1), ('実装（削減）', 26, POSITIVE, POS_LINE, POS_TEXT), ('テスト', 46, NEUTRAL, STROKE, T1), ('リリース', 26, NEUTRAL, STROKE, T1),
-                               ('ADSの整備・保守', 26, ATTENTION, ATT_LINE, ATT_TEXT), ('検証基盤（TAS）', 24, ATTENTION, ATT_LINE, ATT_TEXT), ('横断的な品質保証の枠', 26, ATTENTION, ATT_LINE, ATT_TEXT)], 'AI駆動開発の積み上げ')
-    body.append(f'<path d="M230 {top_l} H560 M770 {top_l} H790" stroke="{LINE}" stroke-width="2" stroke-dasharray="8 6" fill="none"/>')
-    body.append(left); body.append(right)
-    body.append(text(800, top_l + 5, '従来の総工数', 14, 400, MUTED, 'start'))
-    body.append(text(800, top_r + 24, '増える項目', 14, 700, ATT_TEXT, 'start'))
-    body.append(text(800, base - 42 - 26 / 2 + 5, '減る項目', 14, 700, POS_TEXT, 'start'))
-    body.append(note(486, '相殺後の差額ではなく、削減される工数と増える工数を別々の行で示し、再利用できるADSは案件間で償却する'))
-    return svg(1000, 516, '従来とAI駆動開発の原価の積み上げ', body,
-               desc='左の「従来の積み上げ」は設計・実装・テスト・リリースの4段。右の「AI駆動開発の積み上げ」は実装が削減で薄くなる一方、ADSの整備・保守、検証基盤（TAS）、横断的な品質保証の枠の3段が加わる。従来の総工数の高さを破線で示し、右の総量はそれより低い。右側に「減る項目」「増える項目」を記した図。高さは定性的なもので実測値ではない')
-
-
 FIGURES = {
-    '01-effect-and-cost-timeline': fig_01_effect_and_cost_timeline,
-    '02-two-costs': fig_02_two_costs,
-    '02a-understanding-debt': fig_02a_understanding_debt,
-    '03-evaluation-window': fig_03_evaluation_window,
-    '04-issue-mr-health-check': fig_04_issue_mr_health_check,
-    '04-flow-health-vs-qa-load': fig_04_flow_health_vs_qa_load,
-    '04-uncounted-carry-over': fig_04_uncounted_carry_over,
-    '05-gradual-vs-compressed': fig_05_gradual_vs_compressed,
-    '06-sud-ads-definition': fig_06_sud_ads_definition,
-    '06-ai-ci-test-env': fig_06_ai_ci_test_env,
-    '06-sud-and-ads': fig_06_sud_and_ads,
-    '06-sut-and-tas': fig_06_sut_and_tas,
-    '06a-ads-cost-items': fig_06a_ads_cost_items,
-    '06b-ads-maintenance-work': fig_06b_ads_maintenance_work,
-    '06c-cicd-maturity': fig_06c_cicd_maturity,
-    '07-three-costs-cycle': fig_07_three_costs_cycle,
-    '08-constraint-shift': fig_08_constraint_shift,
-    '09-directions': fig_09_directions,
-    '09a-traceable-artifacts': fig_09a_traceable_artifacts,
-    '10-estimate-structure': fig_10_estimate_structure,
+    '01-four-viewpoints': fig_01_four_viewpoints,
+    '02-units-and-levels': fig_02_units_and_levels,
+    '04-means-gradient': fig_04_means_gradient,
+    '05-axe-vs-playwright': fig_05_axe_vs_playwright,
+    '06-levels-and-targets': fig_06_levels_and_targets,
+    '07-responsibility-layers': fig_07_responsibility_layers,
+    '08-component-states': fig_08_component_states,
+    '09-dialog-focus-flow': fig_09_dialog_focus_flow,
+    '10-ci-pipeline': fig_10_ci_pipeline,
+    '11-four-layers': fig_11_four_layers,
 }
 
 

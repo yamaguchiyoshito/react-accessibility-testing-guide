@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="432" viewBox="0 0 1000 432" role="img" aria-label="axe-coreとPlaywrightの責務" aria-describedby="desc">
+<desc id="desc">左の枠「axe-core：ルール違反の検出」には「ある瞬間に描画されたDOM（ラベル・ARIA・コントラストの違反を列挙）」と「違反は見るが、操作の成立は見ない」、右の枠「Playwright：操作と状態遷移の成立」には「開く前」「開いた直後」「Tabの後」の3状態を操作の矢印でつなぎ「各状態でフォーカスや表示を検証」「遷移は見るが、違反の網羅はしない」を置き、2枠をブラケットで束ねて「両方が要る。片方で他方を代替できない」とした図</desc>
+<rect width="100%" height="100%" fill="#fcfdfd"/>
+<text x="50" y="50" text-anchor="start" font-family="sans-serif" font-size="24" font-weight="700" fill="#18324b">axe-coreは一瞬の状態を検査し、Playwrightは操作と遷移を検証する</text>
+<rect x="60" y="90" width="410" height="230" rx="12" fill="#eef3f1" stroke="#8ea6b2" stroke-width="1"/>
+<text x="265" y="124" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#2b5f9e">axe-core</text>
+<text x="265" y="148" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#223e53">ルール違反の検出</text>
+<rect x="90" y="170" width="350" height="56" rx="12" fill="#e1edf8" stroke="#607a91" stroke-width="1"/><text x="265" y="194" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#2b5f9e">ある瞬間に描画されたDOM</text><text x="265" y="218" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">ラベル・ARIA・コントラストの違反を列挙</text>
+<text x="265" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#9c3f2a">違反は見るが、操作の成立は見ない</text>
+<rect x="530" y="90" width="410" height="230" rx="12" fill="#eef3f1" stroke="#8ea6b2" stroke-width="1"/>
+<text x="735" y="124" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#2b5f9e">Playwright</text>
+<text x="735" y="148" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#223e53">操作と状態遷移の成立</text>
+<rect x="548" y="176" width="104" height="40" rx="20.0" fill="#e1edf8" stroke="#607a91" stroke-width="1"/><text x="600" y="201" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#2b5f9e">開く前</text>
+<rect x="683" y="176" width="104" height="40" rx="20.0" fill="#e1edf8" stroke="#607a91" stroke-width="1"/><text x="735" y="201" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#2b5f9e">開いた直後</text>
+<rect x="818" y="176" width="104" height="40" rx="20.0" fill="#e1edf8" stroke="#607a91" stroke-width="1"/><text x="870" y="201" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#2b5f9e">Tabの後</text>
+<path d="M652.0 196.0 L673.0 196.0" stroke="#607a91" stroke-width="3" fill="none"/><polygon points="683.0,196.0 671.0,203.0 671.0,189.0" fill="#607a91"/>
+<path d="M787.0 196.0 L808.0 196.0" stroke="#607a91" stroke-width="3" fill="none"/><polygon points="818.0,196.0 806.0,203.0 806.0,189.0" fill="#607a91"/>
+<text x="667" y="170" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">操作</text>
+<text x="802" y="170" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">操作</text>
+<text x="735" y="240" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#223e53">各状態でフォーカスや表示を検証</text>
+<text x="735" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#9c3f2a">遷移は見るが、違反の網羅はしない</text>
+<path d="M60 348 V336 H940 V348" stroke="#223e53" stroke-width="2" fill="none"/><text x="500" y="369" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#223e53">両方が要る。片方で他方を代替できない</text>
+<text x="500" y="404" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#55646d">axe-coreの検査を操作テストの途中に組み込むと、状態ごとの違反も検出できる</text>
+</svg>

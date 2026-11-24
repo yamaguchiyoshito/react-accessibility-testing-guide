@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="410" viewBox="0 0 1000 410" role="img" aria-label="ダイアログのフォーカス移動" aria-describedby="desc">
+<desc id="desc">左の「編集ボタン」から「① 開く」の矢印でダイアログ内の「顧客名」（開いた直後のフォーカス）へ、「② Tab」の矢印で「メールアドレス」へ進み、ダイアログの下から破線の矢印で「③ Escapeで閉じると、フォーカスは開く前のボタンに戻る」と編集ボタンへ戻る図</desc>
+<rect width="100%" height="100%" fill="#fcfdfd"/>
+<text x="50" y="50" text-anchor="start" font-family="sans-serif" font-size="24" font-weight="700" fill="#18324b">開いたら最初の項目へフォーカスが移り、閉じたら元のボタンへ戻る</text>
+<rect x="60" y="150" width="140" height="44" rx="22.0" fill="#eef3f1" stroke="#8ea6b2" stroke-width="1"/><text x="130" y="177" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#223e53">編集ボタン</text>
+<rect x="280" y="96" width="440" height="180" rx="12" fill="#fcfdfd" stroke="#607a91" stroke-width="1"/>
+<text x="500" y="124" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#223e53">ダイアログ</text>
+<rect x="310" y="150" width="160" height="44" rx="22.0" fill="#e1edf8" stroke="#607a91" stroke-width="1"/><text x="390" y="177" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#2b5f9e">顧客名</text>
+<rect x="530" y="150" width="170" height="44" rx="22.0" fill="#eef3f1" stroke="#8ea6b2" stroke-width="1"/><text x="615" y="177" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#223e53">メールアドレス</text>
+<path d="M200.0 172.0 L300.0 172.0" stroke="#607a91" stroke-width="3" fill="none"/><polygon points="310.0,172.0 298.0,179.0 298.0,165.0" fill="#607a91"/>
+<text x="255" y="160" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#36556d">① 開く</text>
+<path d="M470.0 172.0 L520.0 172.0" stroke="#607a91" stroke-width="3" fill="none"/><polygon points="530.0,172.0 518.0,179.0 518.0,165.0" fill="#607a91"/>
+<text x="500" y="160" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#36556d">② Tab</text>
+<text x="390" y="222" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#2b5f9e">開いた直後のフォーカス</text>
+<text x="615" y="222" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">Tabで次の項目へ</text>
+<path d="M500 276 V312 H130 V206" stroke="#607a91" stroke-width="3" fill="none" stroke-dasharray="8 6"/><polygon points="130.0,200.0 137.0,212.0 123.0,212.0" fill="#607a91"/>
+<text x="315" y="336" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#36556d">③ Escapeで閉じると、フォーカスは開く前のボタンに戻る</text>
+<text x="500" y="382" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#55646d">フォーカスが消えると、キーボード利用者は現在位置を見失う。axe-coreだけでは検証できない</text>
+</svg>
