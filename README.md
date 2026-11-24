@@ -61,7 +61,11 @@ python3 scripts/check_html.py
 
 ## 配布する
 
-`dist/offline.html` は記事をファイル1つにまとめたもので、図を data URI として埋め込み、インターネット接続なしでも開ける。社内への配布はこのファイル1つを共有すればよい。外部スクリプト・外部フォント・外部通信は使っていない。個別の図を別の資料に貼るときは `assets/` の PNG（SVG と同名、幅2000px）を使う。本文や図を変えたら `scripts/build_single.py` を実行して `dist/offline.html` も更新し、一緒にコミットする。
+`dist/offline.html` は記事をファイル1つにまとめたもので、図を data URI として埋め込み、インターネット接続なしでも開ける。社内への配布はこのファイル1つを共有すればよい。外部スクリプト・外部フォント・外部通信は使っていない。ビルド環境がなくても、GitHub のファイル表示（`dist/offline.html`）右上の「Download raw file」か、次の URL からそのまま取得できる。
+
+https://github.com/yamaguchiyoshito/react-accessibility-testing-guide/raw/main/dist/offline.html
+
+個別の図を別の資料に貼るときは `assets/` の PNG（SVG と同名、幅2000px）を使う。本文や図を変えたら `scripts/build_single.py` を実行して `dist/offline.html` も更新し、一緒にコミットする。
 
 CIで検証する場合は、上記の6コマンドを順に実行し、いずれかが失敗したら配布しない。
 
