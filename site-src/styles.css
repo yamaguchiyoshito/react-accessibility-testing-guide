@@ -57,7 +57,7 @@ th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px soli
 th{font-weight:650;white-space:nowrap;color:var(--ink)}
 tbody tr:nth-child(even){background:var(--table-stripe)}
 td[rowspan]{background:var(--card);border-right:1px solid var(--line);vertical-align:middle}
-.table-grid{font-size:13.5px}.table-grid th,.table-grid td{padding:9px 6px}.table-grid td:nth-child(-n+3){white-space:nowrap}
+.table-grid{font-size:13.5px}.table-grid th,.table-grid td{padding:9px 6px}.table-grid td:first-child{white-space:nowrap}
 tbody tr:last-child td{border-bottom:0}
 td[style*="right"],th[style*="right"]{font-variant-numeric:tabular-nums}
 
